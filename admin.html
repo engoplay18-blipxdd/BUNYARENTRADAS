@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BUNYAR - Control de Acceso</title>
+    <title>BUNYAR - Control de Acceso y Aforo</title>
     <style>
         :root {
             --bg-color: #080c14;
             --card-bg: rgba(22, 31, 48, 0.9);
             --success-color: #00ff88;
             --error-color: #ff3366;
+            --warning-color: #ffb703;
             --text-primary: #ffffff;
             --text-secondary: #94a3b8;
         }
@@ -36,7 +37,7 @@
             background: var(--card-bg);
             backdrop-filter: blur(12px);
             border-radius: 20px;
-            padding: 30px 20px;
+            padding: 25px 20px;
             width: 100%;
             max-width: 400px;
             text-align: center;
@@ -44,15 +45,60 @@
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
         }
 
+        /* Contador de Aforo */
+        .aforo-box {
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            border-radius: 14px;
+            padding: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .aforo-info {
+            text-align: left;
+        }
+
+        .aforo-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .aforo-count {
+            font-size: 1.4rem;
+            font-weight: 900;
+            color: var(--success-color);
+        }
+
+        .btn-manual-add {
+            background: rgba(0, 255, 136, 0.15);
+            color: var(--success-color);
+            border: 1px solid var(--success-color);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-manual-add:active {
+            transform: scale(0.95);
+        }
+
         .status-icon {
-            font-size: 4rem;
-            margin-bottom: 10px;
+            font-size: 3.5rem;
+            margin-bottom: 5px;
         }
 
         .status-title {
-            font-size: 1.6rem;
+            font-size: 1.5rem;
             font-weight: 900;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
@@ -67,6 +113,11 @@
             text-shadow: 0 0 15px rgba(255, 51, 102, 0.4);
         }
 
+        .status-full {
+            color: var(--warning-color);
+            text-shadow: 0 0 15px rgba(255, 183, 3, 0.4);
+        }
+
         .details-box {
             background: rgba(15, 23, 42, 0.8);
             border-radius: 12px;
@@ -77,7 +128,7 @@
         }
 
         .details-row {
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
 
         .details-row:last-child {
@@ -92,7 +143,7 @@
         }
 
         .details-value {
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-weight: 700;
             color: #fff;
         }
@@ -116,15 +167,34 @@
             padding: 12px;
             border-radius: 10px;
             font-weight: bold;
-            margin-top: 20px;
+            margin-top: 18px;
             cursor: pointer;
             text-transform: uppercase;
+        }
+
+        .btn-reset-aforo {
+            background: transparent;
+            color: var(--text-secondary);
+            border: none;
+            font-size: 0.7rem;
+            margin-top: 10px;
+            cursor: pointer;
+            text-decoration: underline;
         }
     </style>
 </head>
 <body>
 
     <div class="scanner-card" id="cardResult">
+        <!-- Barra de Aforo -->
+        <div class="aforo-box">
+            <div class="aforo-info">
+                <div class="aforo-label">Aforo Actual</div>
+                <div class="aforo-count"><span id="aforoActual">0</span> / 135</div>
+            </div>
+            <button class="btn-manual-add" onclick="sumarAforoManual()">➕ Sumar +1</button>
+        </div>
+
         <div class="status-icon" id="statusIcon">⏳</div>
         <div class="status-title" id="statusTitle">VALIDANDO ENTRADA...</div>
         
@@ -148,10 +218,49 @@
         </div>
 
         <button class="btn-action" onclick="window.close()">Cerrar / Escanear Otro</button>
+        <button class="btn-reset-aforo" onclick="reiniciarAforo()">Reiniciar Aforo a 0</button>
     </div>
 
     <script>
+        const MAX_AFORO = 135;
+
+        function obtenerAforoActual() {
+            return parseInt(localStorage.getItem('bunyar_aforo_count')) || 0;
+        }
+
+        function actualizarVistaAforo() {
+            const actual = obtenerAforoActual();
+            const aforoEl = document.getElementById('aforoActual');
+            aforoEl.innerText = actual;
+
+            if (actual >= MAX_AFORO) {
+                aforoEl.style.color = '#ff3366';
+            } else {
+                aforoEl.style.color = '#00ff88';
+            }
+        }
+
+        function sumarAforoManual() {
+            let actual = obtenerAforoActual();
+            if (actual < MAX_AFORO) {
+                actual++;
+                localStorage.setItem('bunyar_aforo_count', actual);
+                actualizarVistaAforo();
+            } else {
+                alert("¡Atención! El aforo ya está al máximo de 135 personas.");
+            }
+        }
+
+        function reiniciarAforo() {
+            if (confirm("¿Seguro que deseas reiniciar el contador de aforo a 0?")) {
+                localStorage.setItem('bunyar_aforo_count', 0);
+                actualizarVistaAforo();
+            }
+        }
+
         function procesarValidacion() {
+            actualizarVistaAforo();
+
             const urlParams = new URLSearchParams(window.location.search);
             const dni = urlParams.get('dni');
             const nombre = urlParams.get('nombre');
@@ -169,8 +278,8 @@
                 return;
             }
 
-            // Guardar tickets leídos en la memoria del navegador
             let ticketsUsados = JSON.parse(localStorage.getItem('bunyar_tickets_usados')) || [];
+            let aforoActual = obtenerAforoActual();
 
             document.getElementById('valNombre').innerText = nombre;
             document.getElementById('valDNI').innerText = dni;
@@ -178,19 +287,33 @@
             document.getElementById('valTicketId').innerText = `#${ticketId}`;
             boxEl.style.display = "block";
 
-            // Validar si el ticket ya se escaneó
+            // 1. Validar si la entrada ya fue usad
             if (ticketsUsados.includes(ticketId)) {
                 iconEl.innerText = "❌";
                 titleEl.innerText = "ENTRADA YA USADA";
                 titleEl.className = "status-title status-invalid";
-            } else {
-                ticketsUsados.push(ticketId);
-                localStorage.setItem('bunyar_tickets_usados', JSON.stringify(ticketsUsados));
-
-                iconEl.innerText = "✅";
-                titleEl.innerText = "ACCESO CONCEDIDO";
-                titleEl.className = "status-title status-valid";
+                return;
             }
+
+            // 2. Validar si se superó el aforo máximo de 135
+            if (aforoActual >= MAX_AFORO) {
+                iconEl.innerText = "🚫";
+                titleEl.innerText = "AFORO COMPLETO (135/135)";
+                titleEl.className = "status-title status-full";
+                return;
+            }
+
+            // 3. Si todo está correcto: Aceptar, registrar ticket y SUMAR +1 AL AFORO
+            ticketsUsados.push(ticketId);
+            localStorage.setItem('bunyar_tickets_usados', JSON.stringify(ticketsUsados));
+
+            aforoActual++;
+            localStorage.setItem('bunyar_aforo_count', aforoActual);
+            actualizarVistaAforo();
+
+            iconEl.innerText = "✅";
+            titleEl.innerText = "ACCESO CONCEDIDO (+1)";
+            titleEl.className = "status-title status-valid";
         }
 
         window.onload = procesarValidacion;

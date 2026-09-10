@@ -3,181 +3,315 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ENTRADA VERIFICADA - DISCOTECA BUNYAR 🌴</title>
+    <title>BUNYAR - Control de Acceso & Seguridad</title>
+    <!-- Librería de escáner QR por cámara -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
         :root {
-            --bg-dark: #0a0b0e;
-            --accent-gold: #ffd700;
-            --success-green: #00ff88;
-            --danger-red: #ff4d4d;
+            --bg-color: #0b0f19;
+            --card-bg: #161f30;
+            --accent-neon: #00ff88;
+            --danger-color: #ff3366;
+            --warning-color: #ffcc00;
+            --text-primary: #ffffff;
+            --text-secondary: #a0aec0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
         body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            background-color: var(--bg-dark);
-            color: #fff;
-            margin: 0;
-            padding: 20px;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
-            justify-content: center;
             align-items: center;
-            min-height: 100vh;
-            box-sizing: border-box;
+            padding: 15px;
+        }
+
+        header {
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+            padding: 15px 0;
+            border-bottom: 2px solid #2d3748;
+            margin-bottom: 15px;
+        }
+
+        header h1 {
+            font-size: 1.8rem;
+            letter-spacing: 2px;
+            color: var(--accent-neon);
+            text-transform: uppercase;
+        }
+
+        header p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* Tarjeta de Aforo */
+        .capacity-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            border: 1px solid #2d3748;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+
+        .capacity-title {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .capacity-number {
+            font-size: 2.8rem;
+            font-weight: 800;
+            color: var(--accent-neon);
+            margin: 5px 0;
+        }
+
+        .capacity-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .btn-count {
+            background: #2d3748;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .btn-count:active {
+            background: #4a5568;
+        }
+
+        /* Lector Cámara */
+        .scanner-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 15px;
+            border: 1px solid #2d3748;
             text-align: center;
         }
 
-        .result-screen {
+        #reader {
             width: 100%;
-            max-width: 420px;
-            border-radius: 20px;
-            padding: 30px 20px;
-            box-sizing: border-box;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-            animation: zoomIn 0.4s ease-out;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #000;
         }
 
-        .screen-success {
-            background: radial-gradient(circle, #0e3820 0%, #06170d 100%);
-            border: 3px solid var(--success-green);
-            box-shadow: 0 0 25px rgba(0, 255, 136, 0.3);
+        /* Contenedor de Resultado del Escaneo */
+        .result-card {
+            display: none;
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            animation: popIn 0.3s ease-out;
         }
 
-        .screen-error {
-            background: radial-gradient(circle, #420f0f 0%, #1a0505 100%);
-            border: 3px solid var(--danger-red);
-            box-shadow: 0 0 25px rgba(255, 77, 77, 0.3);
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .status-admitted {
+            background: #004d25;
+            border: 3px solid var(--accent-neon);
+            color: #ffffff;
+            box-shadow: 0 0 30px rgba(0, 255, 136, 0.4);
+        }
+
+        .status-denied {
+            background: #4d0011;
+            border: 3px solid var(--danger-color);
+            color: #ffffff;
+            box-shadow: 0 0 30px rgba(255, 51, 102, 0.4);
+        }
+
+        .status-icon {
+            font-size: 4rem;
+            margin-bottom: 10px;
         }
 
         .status-title {
-            font-size: 2em;
+            font-size: 1.8rem;
             font-weight: 900;
-            margin-bottom: 15px;
             letter-spacing: 1px;
+            margin-bottom: 15px;
+            text-transform: uppercase;
         }
 
-        .info-card {
-            background: rgba(0, 0, 0, 0.6);
-            border-radius: 15px;
-            padding: 20px;
-            text-align: left;
-            margin: 20px 0;
-            font-size: 1.05em;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .info-card p {
-            margin: 8px 0;
-        }
-
-        .aforo-badge {
-            font-size: 1.3em;
-            font-weight: bold;
-            color: var(--accent-gold);
-            background: rgba(255, 215, 0, 0.1);
-            border: 1px dashed var(--accent-gold);
-            padding: 10px;
+        .ticket-details {
+            background: rgba(0, 0, 0, 0.3);
             border-radius: 10px;
+            padding: 12px;
+            text-align: left;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .ticket-details strong {
+            color: #e2e8f0;
+        }
+
+        .btn-reset {
+            width: 100%;
+            background: #ffffff;
+            color: #000;
+            border: none;
+            padding: 14px;
             margin-top: 15px;
-            text-align: center;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            text-transform: uppercase;
         }
 
-        .brand-footer {
-            margin-top: 20px;
-            color: #aaa;
-            font-size: 0.9em;
-        }
-
-        @keyframes zoomIn {
-            from { opacity: 0; transform: scale(0.85); }
-            to { opacity: 1; transform: scale(1); }
+        .btn-reset:active {
+            opacity: 0.8;
         }
     </style>
 </head>
 <body>
 
-    <div id="resultBox" class="result-screen">
-        <div id="statusTitle" class="status-title"></div>
-        
-        <div id="infoDetails" class="info-card"></div>
+    <header>
+        <h1>BUNYAR DISCOTECA</h1>
+        <p>SISTEMA DE VALIDACIÓN DE ENTRADAS & AFORO</p>
+    </header>
 
-        <div class="brand-footer">
-            DISCOTECA BUNYAR 🌴🍹<br>
-            <small>Sistema de Control de Acceso</small>
+    <div class="container">
+        <!-- Control de Aforo -->
+        <div class="capacity-card">
+            <div class="capacity-title">Aforo en Tiempo Real</div>
+            <div class="capacity-number" id="capacityCount">0 / 135</div>
+            <div class="capacity-actions">
+                <button class="btn-count" onclick="updateCapacity(-1)">-1</button>
+                <button class="btn-count" onclick="updateCapacity(1)">+1</button>
+            </div>
+        </div>
+
+        <!-- Pantalla de Resultado (Aparece al escanear) -->
+        <div id="resultBox" class="result-card">
+            <div id="statusIcon" class="status-icon">✅</div>
+            <div id="statusTitle" class="status-title">ENTRADA ADMITIDA</div>
+            
+            <div class="ticket-details">
+                <p><strong>DNI:</strong> <span id="resDNI">-</span></p>
+                <p><strong>Nombres:</strong> <span id="resName">-</span></p>
+                <p><strong>Tipo de Entrada:</strong> <span id="resType">-</span></p>
+                <p><strong>Hora Escaneo:</strong> <span id="resTime">-</span></p>
+            </div>
+
+            <button class="btn-reset" onclick="resetScanner()">Siguiente Cliente 🔄</button>
+        </div>
+
+        <!-- Escáner QR de Cámara -->
+        <div class="scanner-card" id="scannerCard">
+            <p style="margin-bottom: 10px; font-size: 0.9rem; color: var(--text-secondary);">Enfoca el código QR de la entrada del cliente</p>
+            <div id="reader"></div>
         </div>
     </div>
 
     <script>
-        // Obtener datos enviados desde el QR
-        const urlParams = new URLSearchParams(window.location.search);
-        const code = urlParams.get('code');
-        const name = urlParams.get('name');
-        const dni = urlParams.get('dni');
-        const zone = urlParams.get('zone');
+        let capacity = parseInt(localStorage.getItem('bunyar_capacity')) || 0;
+        const maxCapacity = 135;
+        let html5QrcodeScanner;
 
-        const resultBox = document.getElementById('resultBox');
-        const statusTitle = document.getElementById('statusTitle');
-        const infoDetails = document.getElementById('infoDetails');
-
-        // Manejo del Aforo Usando almacenamiento local del navegador
-        let aforoActual = parseInt(localStorage.getItem('bunyar_aforo') || '0');
-        const AFORO_MAXIMO = 135;
-        let ticketsUsados = JSON.parse(localStorage.getItem('bunyar_tickets') || '[]');
-
-        if (code && name) {
-            if (ticketsUsados.includes(code)) {
-                // TICKET YA UTILIZADO
-                resultBox.className = "result-screen screen-error";
-                statusTitle.style.color = "var(--danger-red)";
-                statusTitle.innerText = "⛔ ENTRADA YA USADA";
-
-                infoDetails.innerHTML = `
-                    <p><strong>Asistente:</strong> ${name}</p>
-                    <p><strong>DNI:</strong> ${dni}</p>
-                    <p><strong>Estado:</strong> RECHAZADO ❌</p>
-                    <p style="color: var(--danger-red); margin-top: 10px;">Esta entrada ya fue escaneada anteriormente en puerta.</p>
-                `;
-            } else if (aforoActual >= AFORO_MAXIMO) {
-                // AFORO LLENO
-                resultBox.className = "result-screen screen-error";
-                statusTitle.style.color = "var(--danger-red)";
-                statusTitle.innerText = "🚫 AFORO COMPLETO";
-
-                infoDetails.innerHTML = `
-                    <p><strong>Capacidad:</strong> ${AFORO_MAXIMO} / ${AFORO_MAXIMO}</p>
-                    <p style="color: var(--danger-red);">No se permiten más ingresos a la discoteca.</p>
-                `;
-            } else {
-                // ENTRADA EXITOSA
-                aforoActual++;
-                ticketsUsados.push(code);
-                localStorage.setItem('bunyar_aforo', aforoActual);
-                localStorage.setItem('bunyar_tickets', JSON.stringify(ticketsUsados));
-
-                const esVip = zone === 'VIP';
-
-                resultBox.className = "result-screen screen-success";
-                statusTitle.style.color = "var(--success-green)";
-                statusTitle.innerText = "✅ ENTRADA ADMITIDA";
-
-                infoDetails.innerHTML = `
-                    <p><strong>Asistente:</strong> ${name}</p>
-                    <p><strong>DNI:</strong> ${dni}</p>
-                    <p><strong>Zona:</strong> ${esVip ? '✨ VIP GOLD' : '🍹 NORMAL'}</p>
-                    <p><strong>Código:</strong> ${code}</p>
-                    
-                    <div class="aforo-badge">
-                        Ingreso Registrado: ${aforoActual} de ${AFORO_MAXIMO}
-                    </div>
-                `;
-            }
-        } else {
-            // QR Inválido o lectura directa
-            resultBox.className = "result-screen screen-error";
-            statusTitle.style.color = "var(--danger-red)";
-            statusTitle.innerText = "❌ CÓDIGO NO VÁLIDO";
-            infoDetails.innerHTML = "<p>El código escaneado no corresponde a una entrada activa de Bunyar.</p>";
+        function updateCapacityDisplay() {
+            document.getElementById('capacityCount').innerText = `${capacity} / ${maxCapacity}`;
+            localStorage.setItem('bunyar_capacity', capacity);
         }
+
+        function updateCapacity(val) {
+            capacity = Math.max(0, Math.min(maxCapacity, capacity + val));
+            updateCapacityDisplay();
+        }
+
+        function processTicket(ticketData) {
+            const resultBox = document.getElementById('resultBox');
+            const scannerCard = document.getElementById('scannerCard');
+            
+            scannerCard.style.display = 'none';
+            resultBox.style.display = 'block';
+
+            const now = new Date().toLocaleTimeString();
+            document.getElementById('resTime').innerText = now;
+
+            // Simulación de lectura de datos del QR o URL
+            try {
+                // Si el QR contiene parámetros en la URL (ej: ?dni=12345678&tipo=VIP)
+                const urlParams = new URLSearchParams(ticketData);
+                const dni = urlParams.get('dni') || 'Registrado';
+                const nombre = urlParams.get('nombre') || 'Cliente Verificado';
+                const tipo = urlParams.get('tipo') || 'NORMAL';
+
+                // Mostrar éxito
+                resultBox.className = 'result-card status-admitted';
+                document.getElementById('statusIcon').innerText = '✅';
+                document.getElementById('statusTitle').innerText = 'ENTRADA ADMITIDA';
+                document.getElementById('resDNI').innerText = dni;
+                document.getElementById('resName').innerText = nombre;
+                document.getElementById('resType').innerText = tipo;
+
+                // Auto sumar aforo al admitir
+                updateCapacity(1);
+
+            } catch (e) {
+                // Mostrar Rechazo
+                resultBox.className = 'result-card status-denied';
+                document.getElementById('statusIcon').innerText = '❌';
+                document.getElementById('statusTitle').innerText = 'ENTRADA INVÁLIDA';
+                document.getElementById('resDNI').innerText = 'N/A';
+                document.getElementById('resName').innerText = 'Desconocido';
+                document.getElementById('resType').innerText = 'N/A';
+            }
+        }
+
+        function resetScanner() {
+            document.getElementById('resultBox').style.display = 'none';
+            document.getElementById('scannerCard').style.display = 'block';
+        }
+
+        // Inicializar Escáner de Cámara
+        window.onload = function() {
+            updateCapacityDisplay();
+
+            // Si se abre la página directamente desde un QR con parámetros en la URL
+            if (window.location.search) {
+                processTicket(window.location.search);
+            } else {
+                html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
+                html5QrcodeScanner.render((decodedText) => {
+                    processTicket(decodedText);
+                });
+            }
+        };
     </script>
 </body>
 </html>
